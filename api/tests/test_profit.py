@@ -5,8 +5,8 @@ from fastapi import status
 client = TestClient(app)
 
 
-# Test case to calculate the profit for a stock (AAPL) between two dates.
-def test_calculate_profit1():
+# Tests calculating the profit for a stock (AAPL) between two valid dates
+def test_calculate_profit_valid_range():
     request_data = {
       "ticker": "AAPL",
       "start_date": "12/08/2000",
@@ -45,8 +45,8 @@ def test_calculate_profit1():
     }
 
 
-# Test case with a very old start date and valid end date.
-def test_calculate_profit2():
+# Tests calculating profit with a very old start date and a valid end date
+def test_calculate_profit_old_start_date():
     request_data = {
       "ticker": "AAPL",
       "start_date": "12/08/1000",
@@ -79,8 +79,8 @@ def test_calculate_profit2():
     }
 
 
-# Test case with a start date and end date in reversed order, leading to invalid data.
-def test_calculate_profit3():
+# Tests handling reversed start and end dates, which lead to invalid data
+def test_calculate_profit_reversed_dates():
     request_data = {
       "ticker": "AAPL",
       "start_date": "12/08/2000",
@@ -101,8 +101,8 @@ def test_calculate_profit3():
     }
 
 
-# Test case to calculate the profit for a stock (AAPL) between two dates with wrong date format.
-def test_calculate_profit_date_format():
+# Tests handling incorrect date format when calculating profit for a stock
+def test_calculate_profit_invalid_date_format():
     request_data = {
       "ticker": "AAPL",
       "start_date": "12/08/2000",

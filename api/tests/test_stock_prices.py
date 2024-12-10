@@ -5,8 +5,8 @@ from fastapi import status
 client = TestClient(app)
 
 
-# Test case to create stock price data for a specific stock (AAPL) on a given date.
-def test_create_stock_prices():
+# Tests successful creation of stock price data for a specific date
+def test_create_stock_price_success():
     request_data = {
       "date": "2023-01-01",
       "open": 145.3,
@@ -20,8 +20,26 @@ def test_create_stock_prices():
     assert response.status_code == status.HTTP_201_CREATED
 
 
-# Test case to attempt creating stock price data for a specific stock (AAPL) on a date that already exists.
-def test_create_stock_prices2():
+# Tests attempting to create stock price data for a non-existent stock
+def test_create_stock_price_stock_not_found():
+    request_data = {
+      "date": "2023-01-01",
+      "open": 145.3,
+      "high": 147,
+      "low": 144.5,
+      "close": 146.2,
+      "adj_close": 146,
+      "volume": 1234567
+    }
+    response = client.post('/prices/AAPL65', json=request_data)
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {
+      "detail": "Stock not found"
+    }
+
+
+# Tests attempting to create stock price data for a date that already exists
+def test_create_stock_price_date_already_exists():
     request_data = {
       "date": "2023-01-01",
       "open": 145.3,
@@ -38,8 +56,8 @@ def test_create_stock_prices2():
     }
 
 
-# Test case to retrieve the stock price for a given stock (AAPL) on a specific date (2000-07-24).
-def test_get_stock_prices():
+# Tests retrieving stock price data for a specific date
+def test_get_stock_price_by_date():
     response = client.get("/prices/AAPL/07/24/2000")
     assert response.status_code == status.HTTP_200_OK
     response_json = response.json()
@@ -53,17 +71,26 @@ def test_get_stock_prices():
     assert response_json["stock_id"] == 2
 
 
-# Test case to retrieve the stock price for a given stock (AAPL) with wrong date format.
-def test_get_stock_prices_wrong_time():
+# Tests returning an error when the date format is invalid
+def test_get_stock_price_invalid_date_format():
     response = client.get("/prices/AAPL/07/24/20#00")
     assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
     assert response.json() == {
-  "detail": "Date has wrong format"
-}
+      "detail": "Date has wrong format"
+    }
 
 
-# Test case to update the stock price data for a specific stock (AAPL) on a given date.
-def test_update_stock_prices():
+# Tests returning an error when the stock or date is not found
+def test_get_stock_price_stock_or_date_not_found():
+    response = client.get("/prices/AAPL65/07/24/2000")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {
+      "detail": "Stock or date not found"
+    }
+
+
+# Tests successful update of stock price data for a specific date
+def test_update_stock_price_success():
     request_data = {
       "date": "2023-01-01",
       "open": 145.3,
@@ -77,7 +104,89 @@ def test_update_stock_prices():
     assert response.status_code == status.HTTP_202_ACCEPTED
 
 
-# Test case to delete the stock price data for a specific stock (AAPL) on a given date.
-def test_delete_stock_prices():
+# Tests attempting to update stock price data for a non-existent stock
+def test_update_stock_price_stock_not_found():
+    request_data = {
+      "date": "2023-01-01",
+      "open": 145.3,
+      "high": 147,
+      "low": 144.5,
+      "close": 146.2,
+      "adj_close": 146,
+      "volume": 1
+    }
+    response = client.put("/prices/AAPL65/07/24/2000", json=request_data)
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {
+      "detail": "Stock not found"
+    }
+
+
+# Tests returning an error when trying to update stock price data with an invalid date format
+def test_update_stock_price_invalid_date_format():
+    request_data = {
+      "date": "2023-01-01",
+      "open": 145.3,
+      "high": 147,
+      "low": 144.5,
+      "close": 146.2,
+      "adj_close": 146,
+      "volume": 1
+    }
+    response = client.put("/prices/AAPL/07/24/20#00", json=request_data)
+    assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
+    assert response.json() == {
+      "detail": "Date has wrong format"
+    }
+
+
+
+# Tests attempting to update stock price data for a date that already exists
+def test_update_stock_price_date_already_exists():
+    request_data = {
+      "date": "2000-01-03",
+      "open": 145.3,
+      "high": 147,
+      "low": 144.5,
+      "close": 146.2,
+      "adj_close": 146,
+      "volume": 1
+    }
+    response = client.put("/prices/AAPL/01/01/2023", json=request_data)
+    assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
+    assert response.json() == {
+      "detail": "New date already exists"
+    }
+
+
+# Tests successfully deleting stock price data for a specific date
+def test_delete_stock_price_success():
     response = client.delete("/prices/AAPL/01/01/2023")
     assert response.status_code == status.HTTP_202_ACCEPTED
+
+
+# Tests attempting to delete stock price data for a non-existent stock
+def test_delete_stock_price_stock_not_found():
+    response = client.delete("/prices/AAPL65/01/01/2023")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {
+      "detail": "Stock not found"
+    }
+
+
+# Tests returning an error when trying to delete stock price data with an invalid date format
+def test_delete_stock_price_invalid_date_format():
+    response = client.delete("/prices/AAPL/01/01/20#23")
+    assert response.status_code == status.HTTP_406_NOT_ACCEPTABLE
+    assert response.json() == {
+      "detail": "Date has wrong format"
+    }
+
+
+# Tests attempting to delete stock price data for a non-existent date
+def test_delete_stock_price_date_not_found():
+    response = client.delete("/prices/AAPL/01/01/2023")
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json() == {
+      "detail": "Date not found"
+    }
